@@ -4,6 +4,10 @@
 ```
 npm install
 ```
+### Setup Backend API
+```
+if necessary, in the .env file, change the url for the one of the backend API
+```
 
 ### Compiles and hot-reloads for development
 ```
