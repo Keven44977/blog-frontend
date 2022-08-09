@@ -1,6 +1,8 @@
 import Vue from "vue";
 import VueRouter from "vue-router";
-import HomeView from "../views/HomeView.vue";
+import BlogView from "../views/BlogView.vue";
+import AddOrEditPost from "../views/AddOrEditPost.vue";
+import AddOrEditCategory from "../views/AddOrEditCategory.vue";
 
 Vue.use(VueRouter);
 
@@ -8,16 +10,27 @@ const routes = [
   {
     path: "/",
     name: "home",
-    component: HomeView,
+    component: BlogView,
   },
   {
-    path: "/about",
-    name: "about",
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () =>
-      import(/* webpackChunkName: "about" */ "../views/AboutView.vue"),
+    path: "/AddPost",
+    name: "addPost",
+    component: AddOrEditPost,
+  },
+  {
+    path: "/AddCategory",
+    name: "addCategory",
+    component: AddOrEditCategory,
+  },
+  {
+    path: "/EditCategory/:id",
+    name: "editCategory",
+    component: AddOrEditCategory,
+  },
+  {
+    path: "/EditPost/:id",
+    name: "editPost",
+    component: AddOrEditPost,
   },
 ];
 
