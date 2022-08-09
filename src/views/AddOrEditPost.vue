@@ -20,7 +20,7 @@
             >
             </b-form-input>
             <b-form-invalid-feedback id="title-feedback">
-              The post already exists
+              {{ this.titleStateMessage }}
             </b-form-invalid-feedback>
           </b-form-group>
           <b-form-group
@@ -91,6 +91,7 @@ export default {
         content: null,
       },
       titleState: null,
+      titleStateMessage: "The title cannot be empty",
       pubDateState: null,
       categoryState: null,
       contentState: null,
@@ -172,83 +173,106 @@ export default {
         });
       });
     },
-    onSubmit() {
-      event.preventDefault();
+    handleAxiosError(error) {
+      if (error.response.status == 400) {
+        if (this.form.title == null || this.form.title.trim().length === 0) {
+          this.titleState = false;
+          this.titleStateMessage = "The title cannot be empty";
+        } else {
+          this.titleState = null;
+        }
+      } else if (error.response.status == 409) {
+        this.titleState = false;
+        this.titleStateMessage = "This title already exists";
+      }
+    },
 
+    isFormValid() {
       if (this.form.category == null) {
         if (this.placeholders.category == null) {
           this.categoryState = false;
         } else {
           this.form.category = this.placeholders.category.id;
         }
+      } else {
+        this.categoryState = true;
       }
 
-      if (this.form.title == null) {
+      if (this.form.title == null || this.form.title.trim().length === 0) {
         if (this.placeholders.title == null) {
           this.titleState = false;
         } else {
           this.form.title = this.placeholders.title;
         }
+      } else {
+        this.titleState = null;
       }
 
-      if (this.form.content == null) {
+      if (this.form.content == null || this.form.content.trim().length === 0) {
         if (this.placeholders.content == null) {
           this.contentState = false;
         } else {
           this.form.content = this.placeholders.content;
         }
+      } else {
+        this.contentState = true;
       }
 
       if (!this.isDateValid(this.form.publicationDate)) {
         if (
           this.form.publicationDate == null &&
-          this.placeholders.publicationDate != null
+          this.placeholders.publicationDate != "yyyy-mm-dd"
         ) {
           this.form.publicationDate = this.placeholders.publicationDate;
         } else {
           this.pubDateState = false;
         }
+      } else {
+        this.pubDateState = true;
       }
 
-      if (this.isEditMode) {
-        axios
-          .put("/Posts", {
-            id: this.postToEdit.id,
+      return this.categoryState && this.contentState && this.pubDateState;
+    },
+    onSubmit() {
+      event.preventDefault();
+
+      if (this.isFormValid()) {
+        if (this.isEditMode) {
+          axios
+            .put("/Posts", {
+              id: this.postToEdit.id,
+              title: this.form.title,
+              categoryId: this.form.category,
+              publicationDate: this.form.publicationDate,
+              content: this.form.content,
+            })
+            .then((response) => {
+              if (response.status == 200) {
+                router.push("/");
+              }
+            })
+            .catch((error) => {
+              this.handleAxiosError(error);
+            });
+        } else {
+          var params = {
             title: this.form.title,
             categoryId: this.form.category,
-            publicationDate: this.form.publicationDate,
+            PublicationDate: this.form.publicationDate,
             content: this.form.content,
-          })
-          .then((response) => {
-            if (response.status == 200) {
-              router.push("/");
-            }
-          })
-          .catch((error) => {
-            if (error.response.status == 400) {
-              this.titleState = false;
-            }
-          });
-      } else {
-        var params = {
-          title: this.form.title,
-          categoryId: this.form.category,
-          PublicationDate: this.form.publicationDate,
-          content: this.form.content,
-        };
+          };
 
-        axios
-          .post("/Posts", params)
-          .then((response) => {
-            if (response.status == 200) {
-              router.push("/");
-            }
-          })
-          .catch((error) => {
-            if (error.response.status == 400) {
-              this.titleState = false;
-            }
-          });
+          axios
+            .post("/Posts", params)
+            .then((response) => {
+              if (response.status == 200) {
+                router.push("/");
+              }
+            })
+            .catch((error) => {
+              this.handleAxiosError(error);
+            });
+        }
       }
     },
   },

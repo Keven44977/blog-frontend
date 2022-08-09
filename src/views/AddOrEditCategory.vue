@@ -16,12 +16,11 @@
               :state="titleState"
               aria-describedby="title-feedback"
               :placeholder="titlePlaceHolder"
-              required
               autofocus
             >
             </b-form-input>
             <b-form-invalid-feedback id="title-feedback">
-              The category already exists
+              {{ this.titleStateMessage }}
             </b-form-invalid-feedback>
           </b-form-group>
           <b-button class="my-2" type="submit">Save</b-button>
@@ -44,6 +43,7 @@ export default {
       },
       categoryToEdit: null,
       titleState: null,
+      titleStateMessage: "The title cannot be empty",
       titlePlaceHolder: "",
       modeString: "Add",
       isEditMode: false,
@@ -69,8 +69,29 @@ export default {
         this.titlePlaceHolder = this.categoryToEdit.title;
       });
     },
+    handleAxiosError(error) {
+      if (error.response.status == 400) {
+        if (this.form.title == null || this.form.title.trim().length === 0) {
+          this.titleState = false;
+          this.titleStateMessage = "The title cannot be empty";
+        } else {
+          this.titleState = null;
+        }
+      } else if (error.response.status == 409) {
+        this.titleState = false;
+        this.titleStateMessage = "This title already exists";
+      }
+    },
     onSubmit() {
       event.preventDefault();
+
+      if (this.form.title == null) {
+        if (this.titlePlaceHolder == null) {
+          this.titleState = false;
+        } else {
+          this.form.title = this.titlePlaceHolder;
+        }
+      }
 
       if (this.isEditMode) {
         this.categoryToEdit.title = this.form.title;
@@ -86,9 +107,7 @@ export default {
             }
           })
           .catch((error) => {
-            if (error.response.status == 400) {
-              this.titleState = false;
-            }
+            this.handleAxiosError(error);
           });
       } else {
         axios
@@ -103,7 +122,18 @@ export default {
           })
           .catch((error) => {
             if (error.response.status == 400) {
+              if (
+                this.form.title == null ||
+                this.form.title.trim().length === 0
+              ) {
+                this.titleState = false;
+                this.titleStateMessage = "The title cannot be empty";
+              } else {
+                this.titleState = null;
+              }
+            } else if (error.response.status == 409) {
               this.titleState = false;
+              this.titleStateMessage = "This title already exists";
             }
           });
       }
